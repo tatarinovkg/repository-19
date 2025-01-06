@@ -61,7 +61,7 @@
             gap: 8px;
         }
 
-        .textarea-container {
+        .textarea-container, .rating-container {
             position: relative;
             display: flex;
             flex-direction: column;
@@ -216,6 +216,33 @@
             text-align: center;
             margin-bottom: 20px;
         }
+
+        .stars {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .star {
+            font-size: 24px;
+            color: #ccc;
+            transition: color 0.2s;
+        }
+
+        .star.selected {
+            color: #298ee6;
+        }
+
+        .stars.disabled .star {
+            pointer-events: none;
+            color: #ccc; /* Блеклый цвет */
+            cursor: not-allowed;
+        }
+        textarea[disabled] {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -237,9 +264,21 @@
 
     <p id="serviceDescription" class="hidden"></p>
 
+    <div class="rating-container">
+        <label for="rating">Поставьте оценку от 1 до 5:</label>
+        <div id="rating" class="stars disabled">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+        </div>
+        <div class="error-message" id="ratingError" style="display: none;">Пожалуйста, поставьте оценку.</div>
+    </div>
+
     <div class="textarea-container">
-        <label for="feedbackText">Введите отзыв об услуге:</label>
-        <p style="font-size: 12px; color: #888; margin-top: -8px; margin-bottom: 4px;">Пример: "5 из 5" или "Очень круто! Виталий - мастер своего дела!"</p>
+        <label for="feedbackText">Введите отзыв об услуге (опционально):</label>
+        <p style="font-size: 12px; color: #888; margin-top: -8px; margin-bottom: 4px;">Пример: "Очень круто! Виталий - мастер своего дела!"</p>
         <textarea id="feedbackText" rows="3" placeholder="Введите текст отзыва" disabled></textarea>
         <div class="error-message" id="textError" style="display: none;">Пожалуйста, введите текст отзыва об услуге.</div>
     </div>
@@ -268,9 +307,11 @@
     const groupError = document.getElementById('groupError');
     const serviceError = document.getElementById('serviceError');
     const textError = document.getElementById('textError');
+    const ratingError = document.getElementById('ratingError');
     const serviceDescription = document.getElementById('serviceDescription');
     const groupDropdown = document.getElementById('groupDropdown');
     const serviceDropdown = document.getElementById('serviceDropdown');
+    const ratingStars = document.querySelectorAll('.star');
     const serviceDetailsCache = new Map();
 
     tg.expand();
@@ -280,6 +321,7 @@
 
     let selectedGroupId = null;
     let selectedServiceId = null;
+    let selectedRating = null;
 
     async function fetchGroups() {
         try {
@@ -346,8 +388,12 @@
             <p>Контактная информация: ${service.contactInformation}</p>`;
         serviceDescription.classList.remove('hidden');
         serviceDescription.style.opacity = 1;
-        feedbackText.disabled = false; // Активируем текстовое поле
+
+        // Активация звезд и текстового поля
+        document.getElementById('rating').classList.remove('disabled');
+        feedbackText.disabled = false;
     }
+
 
     function closeOtherDropdown(currentDropdown) {
         if (currentDropdown !== groupDropdown && groupDropdown.classList.contains('active')) {
@@ -357,6 +403,34 @@
             serviceDropdown.classList.remove('active');
         }
     }
+
+    function updateSubmitButtonState() {
+        if (selectedServiceId && selectedRating) {
+            submitFeedback.disabled = false;
+        } else {
+            submitFeedback.disabled = true;
+        }
+    }
+
+    // Обновите обработчик события для текстового поля
+    feedbackText.addEventListener('input', () => {
+        // Текст больше не влияет на состояние кнопки
+        updateSubmitButtonState();
+    });
+
+
+    ratingStars.forEach(star => {
+        star.addEventListener('click', () => {
+            selectedRating = star.dataset.value;
+            ratingStars.forEach(s => s.classList.remove('selected'));
+            star.classList.add('selected');
+            for (let i = 0; i < selectedRating; i++) {
+                ratingStars[i].classList.add('selected');
+            }
+            ratingError.style.display = 'none';
+            updateSubmitButtonState();
+        });
+    });
 
     groupSelect.addEventListener('click', () => {
         closeOtherDropdown(groupDropdown);
@@ -372,12 +446,20 @@
         if (event.target && event.target.classList.contains('dropdown-item')) {
             selectedGroupId = event.target.dataset.groupId;
             groupSelect.textContent = event.target.textContent;
+
+            // Сброс состояния
             serviceSelect.textContent = 'Сначала выберите услугу';
             serviceSelect.disabled = true;
             feedbackText.disabled = true;
+            feedbackText.value = '';
             submitFeedback.disabled = true;
+            selectedRating = null;
+            ratingStars.forEach(s => s.classList.remove('selected'));
+            document.getElementById('rating').classList.add('disabled');
             serviceDescription.classList.add('hidden');
             serviceDescription.style.opacity = 0;
+
+            // Загрузка новых услуг
             fetchServices(selectedGroupId);
             groupDropdown.classList.remove('active');
         }
@@ -389,6 +471,7 @@
             serviceSelect.textContent = event.target.textContent;
             fetchServiceDetails(selectedServiceId);
             serviceDropdown.classList.remove('active');
+            updateSubmitButtonState();
         }
     });
 
@@ -431,6 +514,7 @@
         groupError.style.display = 'none';
         serviceError.style.display = 'none';
         textError.style.display = 'none';
+        ratingError.style.display = 'none';
         const errorMessageElement = document.getElementById('errorMessage');
         errorMessageElement.style.display = 'none';
 
@@ -446,9 +530,8 @@
             return;
         }
 
-        if (!feedbackText.value.trim()) {
-            textError.style.display = 'block';
-            feedbackText.classList.add('error');
+        if (!selectedRating) {
+            ratingError.style.display = 'block';
             return;
         }
 
@@ -465,6 +548,7 @@
                 body: JSON.stringify({
                     userId: tg.initDataUnsafe?.user?.id,
                     serviceId: selectedServiceId,
+                    rating: selectedRating,
                     text: feedbackText.value.trim(),
                 }),
             });
@@ -493,15 +577,6 @@
         if (e.key === 'Enter') {
             e.preventDefault();
             feedbackText.blur();
-        }
-    });
-
-    feedbackText.addEventListener('input', () => {
-        const trimmedText = feedbackText.value.trim();
-        if (trimmedText) {
-            submitFeedback.disabled = false;
-        } else {
-            submitFeedback.disabled = true;
         }
     });
 
