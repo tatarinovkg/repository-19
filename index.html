@@ -542,36 +542,27 @@
         document.getElementById('loadingMessage').textContent = 'Пожалуйста, подождите...';
 
         try {
-            const response = await fetch(feedbackUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: tg.initDataUnsafe?.user?.id,
-                    serviceId: selectedServiceId,
-                    rating: selectedRating,
-                    text: feedbackText.value.trim(),
-                }),
-            });
+            // Формируем данные для отправки через Telegram Web Apps API
+            const feedbackData = {
+                userId: tg.initDataUnsafe?.user?.id,
+                serviceId: selectedServiceId,
+                rating: selectedRating,
+                text: feedbackText.value.trim(),
+            };
 
-            if (response.ok) {
-                document.getElementById('loadingMessage').textContent = 'Оценка успешно отправлена! Закрытие...';
-                setTimeout(() => {
-                    tg.close();
-                }, 2000);
-            } else {
-                throw new Error('Что-то пошло не так. Попробуйте позже.');
-            }
+            // Отправка данных через tg.sendData
+            tg.sendData(JSON.stringify(feedbackData));
+
+            // Успешная отправка
+            document.getElementById('loadingMessage').textContent = 'Оценка успешно отправлена! Закрытие...';
+            tg.close();
         } catch (error) {
             console.error('Ошибка при отправке:', error);
             loadingElement.style.display = 'none';
             errorMessageElement.textContent = 'Что-то пошло не так. Попробуйте позже.';
             errorMessageElement.style.display = 'block';
         } finally {
-            setTimeout(() => {
-                loadingElement.style.display = 'none';
-            }, 500);
+            loadingElement.style.display = 'none';
         }
     });
 
