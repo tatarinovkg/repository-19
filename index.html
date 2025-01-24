@@ -544,6 +544,7 @@
         try {
             // Формируем данные для отправки через Telegram Web Apps API
             const feedbackData = {
+                dataId: 'new_feedback',
                 userId: tg.initDataUnsafe?.user?.id,
                 serviceId: selectedServiceId,
                 rating: selectedRating,
