@@ -316,7 +316,7 @@
     const ratingStars = document.querySelectorAll('.star');
     const serviceDetailsCache = new Map();
 
-    tg.expand();
+    tg.web_app_request_fullscreen();
     tg.MainButton.text = "Закрыть приложение";
     tg.MainButton.onClick(() => tg.close());
     tg.MainButton.show();
