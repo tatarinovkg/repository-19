@@ -3,37 +3,615 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New service feedback</title>
+    <title>New Service Feedback</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        input, textarea {
+            outline: none;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        textarea {
+            resize: none;
+            min-height: 100px;
+        }
+        input:active, textarea:active {
+            outline: none;
+        }
+        textarea:focus {
+            border-color: #298ee6;
+            box-shadow: 0 0 5px #298ee6;
+        }
+        :focus {
+            outline: none;
+        }
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f7f7f8;
+            color: #333;
+            min-height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px 10px 10px 10px;
+            box-sizing: border-box;
         }
-        .content {
+
+        #content {
+            width: 100%;
             max-width: 600px;
-            padding: 0 20px; /* Отступы по бокам */
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-        h2 {
+
+        .select-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .textarea-container, .rating-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .select-box {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .select-box::after {
+            content: '▼';
+            float: right;
+            margin-right: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .select-box.error {
+            border-color: red;
+            box-shadow: 0 0 5px red;
+        }
+
+        .select-box:focus {
+            border-color: #298ee6;
+            box-shadow: 0 0 5px #298ee6;
+        }
+
+        .dropdown-list {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .dropdown-list.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: -8px;
+        }
+
+        #serviceDescription {
+            font-size: 14px;
+            color: #555;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #298ee6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loading {
+            display: none;
+            color: #298ee6;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: #298ee6;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #267bc3;
+        }
+
+        button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .policy-text {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .policy-text a {
+            color: #298ee6;
+            text-decoration: none;
+        }
+
+        .policy-text a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            select, textarea, button {
+                font-size: 14px;
+                padding: 8px;
+            }
+        }
+
+        .title {
             font-size: 24px;
-            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
         }
-        p {
-            font-size: 18px;
-            line-height: 1.5;
+
+        .stars {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .star {
+            font-size: 24px;
+            color: #ccc;
+            transition: color 0.2s;
+        }
+
+        .star.selected {
+            color: #298ee6;
+        }
+
+        .stars.disabled .star {
+            pointer-events: none;
+            color: #ccc; /* Блеклый цвет */
+            cursor: not-allowed;
+        }
+        textarea[disabled] {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-<div class="content">
-    <h2>Скоро вы сможете разместить свой замечательный отзыв</h2>
-    <p>В настоящий момент на сайте проводятся технические работы.<br>
-        Пожалуйста, зайдите через некоторое время.<br>
-        Приносим извинения за неудобства.</p>
+<div id="content">
+    <h3 class="title">Вы можете оставить отзыв об услуге в боте</h3>
+    <div class="select-container">
+        <label for="groupSelect">Выберите группу, в которой находится оцениваемая вами услуга:</label>
+        <div id="groupSelect" class="select-box" tabindex="0">Загрузка групп...</div>
+        <div class="error-message" id="groupError" style="display: none;">Пожалуйста, выберите группу.</div>
+        <div class="dropdown-list" id="groupDropdown"></div>
+    </div>
+
+    <div class="select-container hidden" id="servicesContainer">
+        <label for="serviceSelect">Выберите услугу для оценки:</label>
+        <div id="serviceSelect" class="select-box" tabindex="0">Сначала выберите группу</div>
+        <div class="dropdown-list" id="serviceDropdown"></div>
+        <div class="error-message" id="serviceError" style="display: none;">Пожалуйста, выберите услугу.</div>
+    </div>
+
+    <p id="serviceDescription" class="hidden"></p>
+
+    <div class="rating-container">
+        <label for="rating">Поставьте оценку от 1 до 5:</label>
+        <div id="rating" class="stars disabled">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+        </div>
+        <div class="error-message" id="ratingError" style="display: none;">Пожалуйста, поставьте оценку.</div>
+    </div>
+
+    <div class="textarea-container">
+        <label for="feedbackText">Введите отзыв об услуге (опционально):</label>
+        <p style="font-size: 12px; color: #888; margin-top: -8px; margin-bottom: 4px;">Пример: "Очень круто! Виталий - мастер своего дела!"</p>
+        <textarea id="feedbackText" rows="3" placeholder="Введите текст отзыва" disabled></textarea>
+        <div class="error-message" id="textError" style="display: none;">Пожалуйста, введите текст отзыва об услуге.</div>
+    </div>
+
+    <div id="loading" style="display: none; text-align: center; color: black;">
+        <div class="spinner"></div>
+        <p id="loadingMessage">Пожалуйста, подождите...</p>
+    </div>
+
+    <div id="errorMessage" style="color: red; display: none; text-align: center;"></div>
+
+    <button id="submitFeedback" disabled>Отправить отзыв об услуге</button>
+    <p class="policy-text">Нажимая кнопку "Отправить отзыв об услуге", вы соглашаетесь с
+        <a href="https://telegra.ph/Soglashenie-na-obrabotku-personalnyh-dannyh-v-Telegram-bote-ZH-USLUGI-BOT-12-28">обработкой персональных данных</a> и
+        <a href="https://telegra.ph/Politika-konfidencialnosti-Telegram-bota-ZH-USLUGI-BOT-12-28">политикой конфиденциальности</a> бота.</p>
 </div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    const apiBaseUrl = 'https://cloudpub.tatarinovkg.ru/api/';
+    const feedbackUrl = `${apiBaseUrl}newFeedback`;
+
+    const groupSelect = document.getElementById('groupSelect');
+    const serviceSelect = document.getElementById('serviceSelect');
+    const feedbackText = document.getElementById('feedbackText');
+    const submitFeedback = document.getElementById('submitFeedback');
+    const servicesContainer = document.getElementById('servicesContainer');
+    const groupError = document.getElementById('groupError');
+    const serviceError = document.getElementById('serviceError');
+    const textError = document.getElementById('textError');
+    const ratingError = document.getElementById('ratingError');
+    const serviceDescription = document.getElementById('serviceDescription');
+    const groupDropdown = document.getElementById('groupDropdown');
+    const serviceDropdown = document.getElementById('serviceDropdown');
+    const ratingStars = document.querySelectorAll('.star');
+    const serviceDetailsCache = new Map();
+
+    tg.expand();
+    tg.MainButton.text = "Закрыть приложение";
+    tg.MainButton.onClick(() => tg.close());
+    tg.MainButton.show();
+
+    let selectedGroupId = null;
+    let selectedServiceId = null;
+    let selectedRating = null;
+
+    async function fetchGroups() {
+        try {
+            const response = await fetch(`${apiBaseUrl}groups`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const groups = await response.json();
+            groupDropdown.innerHTML = '';
+            groups.forEach(group => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.textContent = group.name;
+                div.dataset.groupId = group.groupID;
+                groupDropdown.appendChild(div);
+            });
+
+            groupSelect.textContent = 'Выберите группу';
+            groupSelect.disabled = false;
+        } catch (error) {
+            console.error('Ошибка при загрузке групп:', error);
+            groupSelect.textContent = 'Ошибка загрузки групп';
+        }
+    }
+
+    async function fetchServices(groupId) {
+        try {
+            const response = await fetch(`${apiBaseUrl}services/${groupId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+
+            const services = await response.json();
+            serviceDropdown.innerHTML = '';
+            services.forEach(service => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                // Добавляем data-атрибуты для краткого описания и контактного лица
+                div.dataset.shortDescription = service.shortDescription;
+                div.dataset.contactPerson = service.contactPerson;
+                div.dataset.serviceId = service.servicesID;
+                // Отображаем краткое название и контактное лицо с переносом строки
+                div.innerHTML = `<strong>${service.shortDescription}</strong><br><span>${service.contactPerson}</span>`;
+                serviceDropdown.appendChild(div);
+            });
+
+            serviceSelect.textContent = 'Выберите услугу';
+            serviceSelect.disabled = false;
+            servicesContainer.classList.remove('hidden');
+        } catch (error) {
+            console.error('Ошибка при загрузке услуг:', error);
+            serviceSelect.textContent = 'Ошибка загрузки услуг';
+        }
+    }
+
+    serviceDropdown.addEventListener('click', (event) => {
+        if (event.target && event.target.classList.contains('dropdown-item')) {
+            selectedServiceId = event.target.dataset.serviceId;
+            // Формируем текст для выбранной услуги в виде "название_услуги, Имя"
+            const shortDesc = event.target.dataset.shortDescription;
+            const contact = event.target.dataset.contactPerson;
+            serviceSelect.textContent = `${shortDesc}, ${contact}`;
+            fetchServiceDetails(selectedServiceId);
+            serviceDropdown.classList.remove('active');
+            updateSubmitButtonState();
+        }
+    });
+
+
+    function showServiceDetails(service) {
+        serviceDescription.innerHTML = `
+        <h3 style="white-space: pre-wrap; margin: 4px 0;">🛠 ${service.shortDescription}</h3>
+        ${service.service ? `
+        <div style="margin: 4px 0;">
+            <p style="margin: 2px 0;"><strong>🎲 Описание услуги:</strong></p>
+            <div style="white-space: pre-wrap; text-align: left; margin: 2px 0;">${service.service}</div>
+        </div>` : ""}
+        <div style="margin: 4px 0;">
+            <p style="margin: 2px 0;"><strong>👤 Контактное лицо:</strong></p>
+            <div style="white-space: pre-wrap; text-align: left; margin: 2px 0;">${service.contactPerson}</div>
+        </div>
+        <div style="margin: 4px 0;">
+            <p style="margin: 2px 0;"><strong>📞 Контакты:</strong></p>
+            <div style="white-space: pre-wrap; text-align: left; margin: 2px 0;">${formatPhoneNumbers(service.contacts.replace(/\n/g, '<br>'))}</div>
+        </div>
+    `;
+        // Активация звезд и текстового поля для отзыва
+        document.getElementById('rating').classList.remove('disabled');
+        feedbackText.disabled = false;
+    }
+
+
+
+    function closeOtherDropdown(currentDropdown) {
+        if (currentDropdown !== groupDropdown && groupDropdown.classList.contains('active')) {
+            groupDropdown.classList.remove('active');
+        }
+        if (currentDropdown !== serviceDropdown && serviceDropdown.classList.contains('active')) {
+            serviceDropdown.classList.remove('active');
+        }
+    }
+
+    function updateSubmitButtonState() {
+        if (selectedServiceId && selectedRating) {
+            submitFeedback.disabled = false;
+        } else {
+            submitFeedback.disabled = true;
+        }
+    }
+
+    // Обновите обработчик события для текстового поля
+    feedbackText.addEventListener('input', () => {
+        // Текст больше не влияет на состояние кнопки
+        updateSubmitButtonState();
+    });
+
+
+    ratingStars.forEach(star => {
+        star.addEventListener('click', () => {
+            selectedRating = star.dataset.value;
+            ratingStars.forEach(s => s.classList.remove('selected'));
+            star.classList.add('selected');
+            for (let i = 0; i < selectedRating; i++) {
+                ratingStars[i].classList.add('selected');
+            }
+            ratingError.style.display = 'none';
+            updateSubmitButtonState();
+        });
+    });
+
+    groupSelect.addEventListener('click', () => {
+        closeOtherDropdown(groupDropdown);
+        groupDropdown.classList.toggle('active');
+    });
+
+    serviceSelect.addEventListener('click', () => {
+        if (selectedGroupId) {
+            closeOtherDropdown(serviceDropdown);
+            serviceDropdown.classList.toggle('active');
+        }
+    });
+
+    groupDropdown.addEventListener('click', (event) => {
+        if (event.target && event.target.classList.contains('dropdown-item')) {
+            selectedGroupId = event.target.dataset.groupId;
+            groupSelect.textContent = event.target.textContent;
+
+            // Сброс состояния
+            serviceSelect.textContent = 'Сначала выберите услугу';
+            serviceSelect.disabled = true;
+            feedbackText.disabled = true;
+            feedbackText.value = '';
+            submitFeedback.disabled = true;
+            selectedRating = null;
+            ratingStars.forEach(s => s.classList.remove('selected'));
+            document.getElementById('rating').classList.add('disabled');
+            serviceDescription.classList.add('hidden');
+            serviceDescription.style.opacity = 0;
+
+            // Загрузка новых услуг
+            fetchServices(selectedGroupId);
+            groupDropdown.classList.remove('active');
+        }
+    });
+
+    serviceDropdown.addEventListener('click', (event) => {
+        if (event.target && event.target.classList.contains('dropdown-item')) {
+            selectedServiceId = event.target.dataset.serviceId;
+            serviceSelect.textContent = 'Загрузка...'; // Показать текст загрузки
+            fetchServiceDetails(selectedServiceId);
+            serviceDropdown.classList.remove('active');
+            updateSubmitButtonState();
+        }
+    });
+
+    async function fetchServiceDetails(serviceId) {
+        if (!serviceId || isNaN(serviceId)) {
+            console.error("Передан некорректный serviceId:", serviceId);
+            return;
+        }
+
+        // Сразу показываем сообщение о загрузке в компактном виде
+        serviceSelect.textContent = 'Загрузка...';
+        serviceDescription.innerHTML = `<p style="margin: 0; font-size: 16px;">Загрузка...</p>`;
+        serviceDescription.classList.remove('hidden');
+        serviceDescription.style.opacity = 1;
+
+        try {
+            const response = await fetch(`${apiBaseUrl}service_details/${serviceId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+
+            const service = await response.json();
+            serviceDetailsCache.set(serviceId, service);
+            serviceSelect.textContent = `${service.shortDescription}, ${service.contactPerson}`;
+            showServiceDetails(service);
+        } catch (error) {
+            serviceDescription.innerHTML = `<p style="margin: 0; font-size: 16px; color: red;">Ошибка при загрузке данных услуги.</p>`;
+            console.error("Ошибка при получении подробностей услуги:", error);
+        }
+    }
+
+
+
+    submitFeedback.addEventListener('click', async () => {
+        groupError.style.display = 'none';
+        serviceError.style.display = 'none';
+        textError.style.display = 'none';
+        ratingError.style.display = 'none';
+        const errorMessageElement = document.getElementById('errorMessage');
+        errorMessageElement.style.display = 'none';
+
+        if (!selectedGroupId) {
+            groupError.style.display = 'block';
+            groupSelect.classList.add('error');
+            return;
+        }
+
+        if (!selectedServiceId) {
+            serviceError.style.display = 'block';
+            serviceSelect.classList.add('error');
+            return;
+        }
+
+        if (!selectedRating) {
+            ratingError.style.display = 'block';
+            return;
+        }
+
+        const loadingElement = document.getElementById('loading');
+        loadingElement.style.display = 'block';
+        document.getElementById('loadingMessage').textContent = 'Пожалуйста, подождите...';
+
+        try {
+            // Формируем данные для отправки через Telegram Web Apps API
+            const feedbackData = {
+                dataId: 'new_feedback',
+                serviceId: selectedServiceId,
+                rating: selectedRating,
+                text: feedbackText.value.trim(),
+            };
+
+            // Отправка данных через tg.sendData
+            tg.sendData(JSON.stringify(feedbackData));
+
+            // Успешная отправка
+            document.getElementById('loadingMessage').textContent = 'Оценка успешно отправлена! Закрытие...';
+            tg.close();
+        } catch (error) {
+            console.error('Ошибка при отправке:', error);
+            loadingElement.style.display = 'none';
+            errorMessageElement.textContent = 'Что-то пошло не так. Попробуйте позже.';
+            errorMessageElement.style.display = 'block';
+        } finally {
+            loadingElement.style.display = 'none';
+        }
+    });
+
+    feedbackText.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            feedbackText.blur();
+        }
+    });
+
+    function formatPhoneNumbers(text) {
+        const phoneRegex = /(?:\+?\d{1,4}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?)?(?:\d{1,4}[-.\s]?){1,4}/g;
+        return text.replace(phoneRegex, (match) => {
+            const phoneNumber = match.replace(/[^\d+]/g, '').trim();
+            return `<a href="tel:${phoneNumber}">${match.trim()}</a>`;
+        });
+    }
+    fetchGroups();
+</script>
 </body>
 </html>
