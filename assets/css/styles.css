@@ -1,0 +1,208 @@
+input, textarea {
+    outline: none;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+textarea {
+    resize: none;
+    min-height: 100px;
+}
+input:active, textarea:active {
+    outline: none;
+}
+textarea:focus {
+    border-color: #298ee6;
+    box-shadow: 0 0 5px #298ee6;
+}
+:focus {
+    outline: none;
+}
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f7f7f8;
+    color: #333;
+    min-height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    padding: 20px 10px 10px 10px;
+    box-sizing: border-box;
+}
+#content {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.select-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.textarea-container, .rating-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.select-box {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.select-box::after {
+    content: '▼';
+    float: right;
+    margin-right: 10px;
+    font-size: 12px;
+    color: #888;
+}
+.select-box.error {
+    border-color: red;
+    box-shadow: 0 0 5px red;
+}
+.select-box:focus {
+    border-color: #298ee6;
+    box-shadow: 0 0 5px #298ee6;
+}
+.dropdown-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+.dropdown-list.active {
+    display: block;
+}
+.dropdown-item {
+    padding: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+.error-message {
+    color: red;
+    font-size: 12px;
+    margin-top: -8px;
+}
+#serviceDescription {
+    font-size: 14px;
+    color: #555;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    margin-top: 8px;
+}
+.hidden {
+    display: none;
+}
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #298ee6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+#loading {
+    display: none;
+    color: #298ee6;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 20px;
+}
+button {
+    background-color: #298ee6;
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+button:hover {
+    background-color: #267bc3;
+}
+button:disabled {
+    background-color: #ddd;
+    cursor: not-allowed;
+}
+.policy-text {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 2px;
+}
+.policy-text a {
+    color: #298ee6;
+    text-decoration: none;
+}
+.policy-text a:hover {
+    text-decoration: underline;
+}
+@media (max-width: 600px) {
+    select, textarea, button {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.stars {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+.star {
+    font-size: 24px;
+    color: #ccc;
+    transition: color 0.2s;
+}
+.star.selected {
+    color: #298ee6;
+}
+.stars.disabled .star {
+    pointer-events: none;
+    color: #ccc;
+    cursor: not-allowed;
+}
+textarea[disabled] {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+}
