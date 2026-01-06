@@ -1,5 +1,5 @@
 const tg = window.Telegram.WebApp
-const apiBaseUrl = 'https://bot.ovimex72.ru/api/'
+const apiBaseUrl = 'https://api.s.tkgn.ru/api/'
 const groupSelect = document.getElementById('groupSelect')
 const groupSelectText = document.getElementById('groupSelectText')
 const groupDropdown = document.getElementById('groupDropdown')
